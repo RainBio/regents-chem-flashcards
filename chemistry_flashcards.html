@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Chemistry Flashcards</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap');
+
+  :root {
+    --green:      #16a34a;
+    --green-bg:   #dcfce7;
+    --green-text: #14532d;
+    --red:        #ef4444;
+    --red-bg:     #fee2e2;
+    --red-text:   #b91c1c;
+    --gray:       #d1fae5;
+    --gray-dark:  #4d7c60;
+    --front-bg:   #f0fdf4;
+    --back-bg:    #ecfdf5;
+    --back-border:#6ee7b7;
+    --back-label: #059669;
+    --border:     #bbf7d0;
+    --text:       #052e16;
+    --subtext:    #6d9a7d;
+    --blue:       #059669;
+    --amber-bg:   #fef9c3;
+    --amber-border:#fde047;
+    --amber-text: #713f12;
+    --shadow:     0 4px 24px rgba(16,100,50,0.10);
+    --radius:     18px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: linear-gradient(160deg, #dcfce7 0%, #bbf7d0 40%, #d1fae5 100%);
+    min-height: 100vh;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+             env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  .app {
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 18px 14px 40px;
+  }
+
+  /* HEADER */
+  .header { margin-bottom: 16px; }
+  .header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 23px;
+    color: var(--text);
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header h1 .flask { font-size: 20px; }
+  .header p { font-size: 12px; color: var(--subtext); margin-top: 2px; }
+
+  /* UNIT TABS */
+  .unit-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+
+  .unit-tab {
+    position: relative;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: rgba(255,255,255,0.7);
+    color: var(--gray-dark);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+  }
+  .unit-tab:hover { border-color: #6ee7b7; color: var(--text); background: rgba(255,255,255,0.9); }
+  .unit-tab.active { background: var(--green); color: white; border-color: var(--green); }
+
+  .done-dot {
+    display: none;
+    position: absolute;
+    top: -4px; right: -4px;
+    width: 14px; height: 14px;
+    background: #10b981;
+    border-radius: 50%;
+    border: 2px solid #dcfce7;
+    align-items: center;
+    justify-content: center;
+    font-size: 7px;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+  }
+  .unit-tab.complete .done-dot { display: flex; }
+
+  /* TOP BUTTONS */
+  .top-row { display: flex; gap: 7px; margin-bottom: 12px; }
+
+  .btn {
+    flex: 1;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    font-size: 13px;
+    padding: 9px 6px;
+    border-radius: 11px;
+    border: 1.5px solid var(--border);
+    background: rgba(255,255,255,0.8);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    backdrop-filter: blur(4px);
+  }
+  .btn:hover { background: rgba(255,255,255,0.95); }
+  .btn:active { transform: scale(0.97); }
+
+  /* REVIEW BANNER */
+  .review-banner {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    border-radius: 11px;
+    padding: 9px 13px;
+    margin-bottom: 12px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .review-banner.show { display: flex; }
+  .review-banner.idle  { background: var(--amber-bg); border: 1.5px solid var(--amber-border); color: var(--amber-text); }
+  .review-banner.active { background: #d1fae5; border: 1.5px solid #6ee7b7; color: #065f46; }
+
+  .review-banner .rbtn {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    border: none;
+    border-radius: 7px;
+    padding: 5px 11px;
+    color: white;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .review-banner.idle  .rbtn { background: #ca8a04; }
+  .review-banner.active .rbtn { background: var(--green); }
+
+  /* CARD VIEWPORT */
+  .card-viewport {
+    overflow: hidden;
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    height: 52vw;
+    max-height: 295px;
+    min-height: 195px;
+    position: relative;
+  }
+
+  .card-slider {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    will-change: transform;
+  }
+  .card-slider.animating {
+    transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .card-area {
+    flex-shrink: 0;
+    width: 100%;
+    height: 100%;
+    perspective: 1000px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .card-ghost {
+    flex-shrink: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    background: rgba(255,255,255,0.85);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 22px 20px;
+    text-align: center;
+    position: absolute;
+    top: 0;
+    pointer-events: none;
+  }
+  .card-ghost .ghost-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--subtext);
+    margin-bottom: 12px;
+  }
+  .card-ghost .ghost-term {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(16px, 4vw, 23px);
+    color: var(--text);
+    line-height: 1.25;
+  }
+
+  .card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.38s ease;
+  }
+  .card-inner.flipped { transform: rotateY(180deg); }
+
+  .card-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 22px 20px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .card-front { background: rgba(255,255,255,0.92); }
+  .card-back  { background: var(--back-bg); border-color: var(--back-border); transform: rotateY(180deg); }
+
+  .card-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--subtext);
+    margin-bottom: 12px;
+    flex-shrink: 0;
+  }
+  .card-back .card-label { color: var(--back-label); }
+
+  .card-term {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(17px, 4vw, 24px);
+    color: var(--text);
+    line-height: 1.25;
+  }
+
+  .card-def {
+    font-size: clamp(12px, 3vw, 15px);
+    line-height: 1.6;
+    color: var(--text);
+    overflow-y: auto;
+    max-height: calc(100% - 40px);
+  }
+
+  .flip-hint {
+    position: absolute;
+    bottom: 11px;
+    font-size: 10px;
+    color: var(--subtext);
+    pointer-events: none;
+  }
+
+  /* COMPLETION PANEL */
+  .completion {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 32px 20px;
+    background: rgba(255,255,255,0.88);
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+    margin-bottom: 10px;
+    min-height: 195px;
+  }
+  .completion.show { display: flex; }
+  .completion .c-emoji { font-size: 46px; margin-bottom: 12px; }
+  .completion h2 { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 6px; color: var(--text); }
+  .completion p  { font-size: 13px; color: var(--gray-dark); line-height: 1.5; }
+
+  /* PROGRESS BAR */
+  .progress-wrap { margin-bottom: 10px; }
+  .progress-bar  { height: 6px; background: #a7f3d0; border-radius: 999px; overflow: hidden; display: flex; }
+  .bar-got  { background: var(--green); height: 100%; transition: width 0.3s ease; }
+  .bar-miss { background: var(--red);   height: 100%; transition: width 0.3s ease; }
+
+  .progress-meta { display: flex; justify-content: space-between; margin-top: 5px; font-size: 11px; color: var(--subtext); }
+  .progress-meta .pill { display: flex; align-items: center; gap: 4px; }
+  .dot   { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .dot-g { background: var(--green); }
+  .dot-r { background: var(--red); }
+  .progress-pos { font-weight: 600; color: #14532d; font-size: 11px; }
+
+  /* NAV ROW */
+  .nav-row { display: flex; gap: 7px; margin-bottom: 10px; }
+
+  /* GRADE BUTTONS */
+  .grade-wrap { overflow: hidden; max-height: 0; opacity: 0; transition: max-height 0.28s ease, opacity 0.22s ease; }
+  .grade-wrap.show { max-height: 60px; opacity: 1; }
+  .grade-row { display: flex; gap: 7px; }
+
+  .btn-got, .btn-miss {
+    flex: 1;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 12px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: filter 0.15s, transform 0.1s;
+  }
+  .btn-got  { background: var(--green-bg); color: var(--green-text); }
+  .btn-miss { background: var(--red-bg);   color: var(--red-text); }
+  .btn-got:hover, .btn-miss:hover { filter: brightness(0.95); }
+  .btn-got:active, .btn-miss:active { transform: scale(0.97); }
+
+  /* HINT */
+  .swipe-hint { text-align: center; font-size: 11px; color: var(--subtext); margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <h1><span class="flask">⚗️</span> Chemistry Flashcards</h1>
+    <p>Tap card to flip &nbsp;·&nbsp; swipe or arrow keys to navigate &nbsp;·&nbsp; Space to flip</p>
+  </div>
+
+  <div class="unit-tabs" id="unitTabs"></div>
+
+  <div class="top-row">
+    <button class="btn" onclick="shuffleDeck()">⇄ Shuffle</button>
+    <button class="btn" onclick="resetDeck()">↺ Reset</button>
+    <button class="btn" onclick="doFlip()">⟳ Flip</button>
+  </div>
+
+  <div class="review-banner idle" id="reviewBanner">
+    <span id="reviewBannerText"></span>
+    <button class="rbtn" id="reviewBannerBtn" onclick="toggleReviewMode()"></button>
+  </div>
+
+  <div class="card-viewport" id="cardViewport">
+    <div class="card-slider" id="cardSlider">
+
+      <div class="card-ghost" id="cardGhost" style="left:-100%">
+        <div class="ghost-label" id="ghostLabel">Term</div>
+        <div class="ghost-term"  id="ghostTerm"></div>
+      </div>
+
+      <div class="card-area" id="cardArea" onclick="doFlip()">
+        <div class="card-inner" id="cardInner">
+          <div class="card-face card-front">
+            <div class="card-label">Term</div>
+            <div class="card-term" id="term"></div>
+            <div class="flip-hint">tap to reveal</div>
+          </div>
+          <div class="card-face card-back">
+            <div class="card-label">Definition</div>
+            <div class="card-def" id="def"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="completion" id="completion">
+    <div class="c-emoji" id="cEmoji"></div>
+    <h2 id="cTitle"></h2>
+    <p  id="cSub"></p>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-bar">
+      <div class="bar-got"  id="barGot"  style="width:0%"></div>
+      <div class="bar-miss" id="barMiss" style="width:0%"></div>
+    </div>
+    <div class="progress-meta">
+      <span class="pill"><span class="dot dot-g"></span><span id="lblGot">0 got it</span></span>
+      <span class="progress-pos" id="lblPos"></span>
+      <span class="pill"><span class="dot dot-r"></span><span id="lblMiss">0 missed</span></span>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn" onclick="navigate(-1)">← Prev</button>
+    <button class="btn" onclick="navigate(1)">Next →</button>
+  </div>
+
+  <div class="grade-wrap" id="gradeWrap">
+    <div class="grade-row">
+      <button class="btn-got"  onclick="grade('got')">Got it ✓</button>
+      <button class="btn-miss" onclick="grade('miss')">Still learning ✗</button>
+    </div>
+  </div>
+
+  <div class="swipe-hint">Swipe left / right &nbsp;·&nbsp; ← → keys &nbsp;·&nbsp; 1 = got it &nbsp;·&nbsp; 2 = missed</div>
+
+</div>
+<script>
+const ALL = [
+  // Matter & Structure
+  {u:"Matter & Structure",t:"Atom",d:"The smallest unit of an element that retains its chemical identity, made up of protons, neutrons, and electrons."},
+  {u:"Matter & Structure",t:"Element",d:"A pure substance made of only one kind of atom that cannot be broken down by chemical means."},
+  {u:"Matter & Structure",t:"Compound",d:"A substance made of two or more elements chemically combined in a fixed ratio."},
+  {u:"Matter & Structure",t:"Mixture",d:"A combination of two or more substances that are not chemically combined and can be separated by physical means."},
+  {u:"Matter & Structure",t:"Pure substance",d:"Matter with a uniform and definite composition — either an element or a compound."},
+  {u:"Matter & Structure",t:"Homogeneous mixture",d:"A mixture with uniform composition throughout, such as saltwater (also called a solution)."},
+  {u:"Matter & Structure",t:"Heterogeneous mixture",d:"A mixture that does not have a uniform composition, such as sand and water."},
+  {u:"Matter & Structure",t:"Physical property",d:"A characteristic of matter that can be observed or measured without changing the chemical composition, e.g., density, color, melting point."},
+  {u:"Matter & Structure",t:"Chemical property",d:"A property describing how a substance interacts with other substances to form new substances, e.g., flammability, reactivity."},
+  {u:"Matter & Structure",t:"Density",d:"Mass per unit volume of a substance, expressed as D = m/v (g/mL or g/cm³)."},
+  {u:"Matter & Structure",t:"Phase change",d:"A physical change in which a substance transitions between solid, liquid, and gas states."},
+  {u:"Matter & Structure",t:"Sublimation",d:"The phase change from solid directly to gas without passing through the liquid phase."},
+  {u:"Matter & Structure",t:"Melting point",d:"The temperature at which a solid changes to a liquid at constant pressure."},
+  {u:"Matter & Structure",t:"Boiling point",d:"The temperature at which a liquid changes to a gas at constant pressure."},
+  // Atomic Theory
+  {u:"Atomic Theory",t:"Atomic number",d:"The number of protons in the nucleus of an atom, which determines the element's identity."},
+  {u:"Atomic Theory",t:"Mass number",d:"The total number of protons and neutrons in the nucleus of an atom."},
+  {u:"Atomic Theory",t:"Isotope",d:"Atoms of the same element that have the same number of protons but different numbers of neutrons."},
+  {u:"Atomic Theory",t:"Atomic mass",d:"The weighted average mass of all naturally occurring isotopes of an element, measured in atomic mass units (amu)."},
+  {u:"Atomic Theory",t:"Nucleus",d:"The small, dense, positively charged center of an atom, containing protons and neutrons."},
+  {u:"Atomic Theory",t:"Electron",d:"A negatively charged subatomic particle found in orbitals outside the nucleus."},
+  {u:"Atomic Theory",t:"Proton",d:"A positively charged subatomic particle found in the nucleus."},
+  {u:"Atomic Theory",t:"Neutron",d:"A neutral (no charge) subatomic particle found in the nucleus."},
+  {u:"Atomic Theory",t:"Electron configuration",d:"The arrangement of electrons in the energy levels and sublevels of an atom."},
+  {u:"Atomic Theory",t:"Valence electrons",d:"Electrons in the outermost energy level of an atom, which determine its chemical reactivity."},
+  {u:"Atomic Theory",t:"Ground state",d:"The lowest energy state of an atom, where electrons are in their most stable arrangement."},
+  {u:"Atomic Theory",t:"Excited state",d:"A higher energy state of an atom when one or more electrons have absorbed energy and moved to higher energy levels."},
+  {u:"Atomic Theory",t:"Orbital",d:"A region of space around the nucleus where there is a high probability of finding an electron."},
+  {u:"Atomic Theory",t:"Principal energy level",d:"The main energy level of an electron in an atom, designated by the quantum number n."},
+  // Periodic Table
+  {u:"Periodic Table",t:"Periodic table",d:"A chart that organizes elements by increasing atomic number into periods (rows) and groups (columns) based on recurring properties."},
+  {u:"Periodic Table",t:"Period",d:"A horizontal row on the periodic table; elements in the same period have the same number of electron shells."},
+  {u:"Periodic Table",t:"Group (family)",d:"A vertical column on the periodic table; elements share similar chemical properties due to the same number of valence electrons."},
+  {u:"Periodic Table",t:"Metal",d:"An element that is typically shiny, malleable, ductile, and a good conductor of heat and electricity; located on the left side of the periodic table."},
+  {u:"Periodic Table",t:"Nonmetal",d:"An element that is typically dull, brittle, and a poor conductor; located on the upper-right side of the periodic table."},
+  {u:"Periodic Table",t:"Metalloid",d:"An element with properties intermediate between metals and nonmetals; found along the staircase dividing metals and nonmetals."},
+  {u:"Periodic Table",t:"Alkali metal",d:"A highly reactive metal in Group 1 (e.g., sodium, potassium), with one valence electron."},
+  {u:"Periodic Table",t:"Alkaline earth metal",d:"A reactive metal in Group 2 with two valence electrons (e.g., magnesium, calcium)."},
+  {u:"Periodic Table",t:"Halogen",d:"A highly reactive nonmetal in Group 17 with seven valence electrons (e.g., fluorine, chlorine)."},
+  {u:"Periodic Table",t:"Noble gas",d:"An unreactive, stable element in Group 18 with a full outer electron shell (e.g., helium, argon)."},
+  {u:"Periodic Table",t:"Transition metal",d:"A metal in Groups 3–12 that often forms colored compounds and has variable oxidation states."},
+  {u:"Periodic Table",t:"Electronegativity",d:"A measure of an atom's ability to attract electrons in a chemical bond; increases across a period and decreases down a group."},
+  {u:"Periodic Table",t:"Ionization energy",d:"The energy required to remove an electron from a neutral gaseous atom; increases across a period and decreases down a group."},
+  {u:"Periodic Table",t:"Atomic radius",d:"The size of an atom, approximated as half the distance between nuclei of two bonded identical atoms; decreases across a period and increases down a group."},
+  // Bonding
+  {u:"Bonding",t:"Ion",d:"An atom or group of atoms that has gained or lost electrons, resulting in a net electric charge."},
+  {u:"Bonding",t:"Cation",d:"A positively charged ion formed when an atom loses one or more electrons."},
+  {u:"Bonding",t:"Anion",d:"A negatively charged ion formed when an atom gains one or more electrons."},
+  {u:"Bonding",t:"Ionic bond",d:"A chemical bond formed by the electrostatic attraction between oppositely charged ions (transfer of electrons from metal to nonmetal)."},
+  {u:"Bonding",t:"Covalent bond",d:"A chemical bond formed by the sharing of electron pairs between two nonmetal atoms."},
+  {u:"Bonding",t:"Polar covalent bond",d:"A covalent bond in which electrons are shared unequally due to a difference in electronegativity between the two atoms."},
+  {u:"Bonding",t:"Nonpolar covalent bond",d:"A covalent bond in which electrons are shared equally, typical when the two atoms are the same element."},
+  {u:"Bonding",t:"Metallic bond",d:"A bond in which metal cations are surrounded by a 'sea' of mobile electrons, explaining metals' conductivity and malleability."},
+  {u:"Bonding",t:"Lewis dot structure",d:"A diagram that uses dots to represent valence electrons around the symbol of an element to show bonding."},
+  {u:"Bonding",t:"Molecule",d:"The smallest unit of a covalently bonded compound, consisting of two or more atoms bonded together."},
+  {u:"Bonding",t:"Polyatomic ion",d:"A charged group of covalently bonded atoms that acts as a single unit in ionic compounds (e.g., SO₄²⁻, NH₄⁺)."},
+  {u:"Bonding",t:"Network solid",d:"A substance in which atoms are connected by covalent bonds throughout the entire solid, e.g., diamond and quartz."},
+  {u:"Bonding",t:"Intermolecular forces",d:"Forces of attraction between separate molecules; weaker than intramolecular (chemical) bonds. Includes London dispersion, dipole-dipole, and hydrogen bonding."},
+  {u:"Bonding",t:"Hydrogen bond",d:"A strong intermolecular attraction between a hydrogen atom bonded to N, O, or F and a nearby N, O, or F atom."},
+  // Chemical Formulas & Reactions
+  {u:"Formulas & Reactions",t:"Chemical formula",d:"A representation using element symbols and subscripts to show the composition of a substance (e.g., H₂O, NaCl)."},
+  {u:"Formulas & Reactions",t:"Mole",d:"The SI unit for amount of substance; 1 mole = 6.02 × 10²³ particles (Avogadro's number)."},
+  {u:"Formulas & Reactions",t:"Molar mass",d:"The mass in grams of one mole of a substance; numerically equal to atomic or formula mass in amu."},
+  {u:"Formulas & Reactions",t:"Avogadro's number",d:"6.02 × 10²³, the number of particles (atoms, molecules, or ions) in one mole of a substance."},
+  {u:"Formulas & Reactions",t:"Empirical formula",d:"The simplest whole-number ratio of atoms of each element in a compound."},
+  {u:"Formulas & Reactions",t:"Molecular formula",d:"The actual number of atoms of each element in one molecule of a compound."},
+  {u:"Formulas & Reactions",t:"Percent composition",d:"The percentage by mass of each element in a compound."},
+  {u:"Formulas & Reactions",t:"Chemical equation",d:"A representation of a chemical reaction using symbols and formulas; reactants are on the left, products on the right."},
+  {u:"Formulas & Reactions",t:"Balanced equation",d:"A chemical equation in which the number of atoms of each element is the same on both sides, obeying conservation of mass."},
+  {u:"Formulas & Reactions",t:"Reactant",d:"A starting material in a chemical reaction, written on the left side of the equation."},
+  {u:"Formulas & Reactions",t:"Product",d:"A substance formed as a result of a chemical reaction, written on the right side of the equation."},
+  {u:"Formulas & Reactions",t:"Synthesis reaction",d:"A reaction in which two or more substances combine to form a single new substance: A + B → AB."},
+  {u:"Formulas & Reactions",t:"Decomposition reaction",d:"A reaction in which a compound breaks down into simpler substances: AB → A + B."},
+  {u:"Formulas & Reactions",t:"Single replacement",d:"A reaction in which one element replaces another in a compound: A + BC → AC + B."},
+  {u:"Formulas & Reactions",t:"Double replacement",d:"A reaction in which two compounds exchange ions to form two new compounds: AB + CD → AD + CB."},
+  {u:"Formulas & Reactions",t:"Combustion reaction",d:"A reaction in which a substance reacts rapidly with oxygen, producing oxides, heat, and light."},
+  {u:"Formulas & Reactions",t:"Conservation of mass",d:"The law stating that matter is neither created nor destroyed in a chemical reaction; total mass of reactants equals total mass of products."},
+  {u:"Formulas & Reactions",t:"Stoichiometry",d:"The calculation of the quantities of reactants and products in a chemical reaction based on a balanced equation."},
+  {u:"Formulas & Reactions",t:"Limiting reagent",d:"The reactant that is completely consumed in a reaction and limits the amount of product formed."},
+  {u:"Formulas & Reactions",t:"Excess reagent",d:"The reactant that remains after the limiting reagent is used up."},
+  // Kinetics & Equilibrium
+  {u:"Kinetics & Equilibrium",t:"Activation energy",d:"The minimum energy required for a chemical reaction to begin."},
+  {u:"Kinetics & Equilibrium",t:"Reaction rate",d:"The speed at which reactants are converted to products; affected by temperature, concentration, surface area, and catalysts."},
+  {u:"Kinetics & Equilibrium",t:"Catalyst",d:"A substance that increases the rate of a reaction by lowering activation energy without being consumed."},
+  {u:"Kinetics & Equilibrium",t:"Enzyme",d:"A biological catalyst, usually a protein, that speeds up chemical reactions in living organisms."},
+  {u:"Kinetics & Equilibrium",t:"Chemical equilibrium",d:"The state of a reversible reaction in which the rate of the forward reaction equals the rate of the reverse reaction and concentrations remain constant."},
+  {u:"Kinetics & Equilibrium",t:"Le Chatelier's principle",d:"If a stress (change in concentration, temperature, or pressure) is applied to a system at equilibrium, the system shifts to relieve the stress."},
+  {u:"Kinetics & Equilibrium",t:"Reversible reaction",d:"A reaction that can proceed in both forward and reverse directions, indicated by a double arrow (⇌)."},
+  {u:"Kinetics & Equilibrium",t:"Potential energy diagram",d:"A graph showing the energy changes that occur during a chemical reaction, including activation energy and heat of reaction."},
+  {u:"Kinetics & Equilibrium",t:"Exothermic reaction",d:"A reaction that releases energy (usually heat) to the surroundings; products have lower energy than reactants."},
+  {u:"Kinetics & Equilibrium",t:"Endothermic reaction",d:"A reaction that absorbs energy from the surroundings; products have higher energy than reactants."},
+  {u:"Kinetics & Equilibrium",t:"Heat of reaction (ΔH)",d:"The energy absorbed or released during a chemical reaction; negative for exothermic, positive for endothermic."},
+  // Solutions
+  {u:"Solutions",t:"Solution",d:"A homogeneous mixture consisting of a solute dissolved in a solvent."},
+  {u:"Solutions",t:"Solute",d:"The substance that is dissolved in a solution, present in smaller amount."},
+  {u:"Solutions",t:"Solvent",d:"The substance that dissolves the solute, present in greater amount; water is the universal solvent."},
+  {u:"Solutions",t:"Solubility",d:"The maximum amount of solute that can dissolve in a given amount of solvent at a specific temperature and pressure."},
+  {u:"Solutions",t:"Saturated solution",d:"A solution that contains the maximum amount of dissolved solute at a given temperature."},
+  {u:"Solutions",t:"Unsaturated solution",d:"A solution that contains less dissolved solute than the maximum possible at a given temperature."},
+  {u:"Solutions",t:"Supersaturated solution",d:"An unstable solution containing more solute than normally possible at that temperature; crystallizes readily."},
+  {u:"Solutions",t:"Concentration",d:"The amount of solute dissolved in a given volume of solution, often expressed in molarity (mol/L)."},
+  {u:"Solutions",t:"Molarity (M)",d:"A measure of concentration equal to the number of moles of solute per liter of solution (mol/L)."},
+  {u:"Solutions",t:"Parts per million (ppm)",d:"A unit of concentration used for very dilute solutions; grams of solute per million grams of solution."},
+  {u:"Solutions",t:"Electrolyte",d:"A substance that dissociates into ions in solution and conducts electricity (e.g., NaCl)."},
+  {u:"Solutions",t:"Nonelectrolyte",d:"A substance that does not dissociate into ions in solution and does not conduct electricity (e.g., sugar)."},
+  {u:"Solutions",t:"Dissociation",d:"The separation of an ionic compound into individual ions when it dissolves in water."},
+  {u:"Solutions",t:"Colligative properties",d:"Properties of solutions that depend on the number of dissolved particles, not their identity (e.g., boiling point elevation, freezing point depression)."},
+  // Acids & Bases
+  {u:"Acids & Bases",t:"Acid",d:"A substance that donates hydrogen ions (H⁺) in solution (Arrhenius: produces H⁺ in water; Brønsted-Lowry: proton donor)."},
+  {u:"Acids & Bases",t:"Base",d:"A substance that accepts hydrogen ions or donates hydroxide ions (OH⁻) in solution."},
+  {u:"Acids & Bases",t:"pH",d:"A measure of the hydrogen ion concentration of a solution; pH < 7 is acidic, pH = 7 is neutral, pH > 7 is basic."},
+  {u:"Acids & Bases",t:"pOH",d:"A measure of the hydroxide ion concentration; pOH + pH = 14 at 25°C."},
+  {u:"Acids & Bases",t:"Neutral solution",d:"A solution with equal concentrations of H⁺ and OH⁻ ions, giving a pH of 7."},
+  {u:"Acids & Bases",t:"Strong acid",d:"An acid that completely ionizes in water (e.g., HCl, HNO₃, H₂SO₄)."},
+  {u:"Acids & Bases",t:"Weak acid",d:"An acid that only partially ionizes in water, establishing an equilibrium (e.g., acetic acid, CH₃COOH)."},
+  {u:"Acids & Bases",t:"Strong base",d:"A base that completely dissociates in water (e.g., NaOH, KOH)."},
+  {u:"Acids & Bases",t:"Weak base",d:"A base that only partially ionizes in water (e.g., ammonia, NH₃)."},
+  {u:"Acids & Bases",t:"Neutralization",d:"A reaction between an acid and a base that produces a salt and water: acid + base → salt + water."},
+  {u:"Acids & Bases",t:"Titration",d:"A laboratory technique in which a solution of known concentration is added to a solution of unknown concentration to determine the unknown's concentration."},
+  {u:"Acids & Bases",t:"Indicator",d:"A substance that changes color at a certain pH, used to determine whether a solution is acidic or basic."},
+  {u:"Acids & Bases",t:"Equivalence point",d:"The point in a titration where the moles of acid equal the moles of base, and complete neutralization has occurred."},
+  {u:"Acids & Bases",t:"Amphiprotic substance",d:"A substance that can act as either an acid or a base (e.g., water, H₂O)."},
+  {u:"Acids & Bases",t:"Conjugate acid-base pair",d:"An acid and base related by the gain or loss of one proton (H⁺), differing by one H."},
+  // Redox & Electrochemistry
+  {u:"Redox & Electrochemistry",t:"Oxidation",d:"The loss of electrons by an atom, ion, or molecule; oxidation state increases."},
+  {u:"Redox & Electrochemistry",t:"Reduction",d:"The gain of electrons by an atom, ion, or molecule; oxidation state decreases."},
+  {u:"Redox & Electrochemistry",t:"Oxidation number",d:"A number assigned to an element in a compound representing the charge it would have if electrons were fully transferred."},
+  {u:"Redox & Electrochemistry",t:"Oxidizing agent",d:"A substance that causes another substance to be oxidized and is itself reduced."},
+  {u:"Redox & Electrochemistry",t:"Reducing agent",d:"A substance that causes another substance to be reduced and is itself oxidized."},
+  {u:"Redox & Electrochemistry",t:"Half-reaction",d:"An equation showing either the oxidation or reduction part of a redox reaction separately."},
+  {u:"Redox & Electrochemistry",t:"Electrochemical cell",d:"A device that converts chemical energy to electrical energy (galvanic cell) or electrical energy to chemical energy (electrolytic cell)."},
+  {u:"Redox & Electrochemistry",t:"Galvanic (voltaic) cell",d:"An electrochemical cell that uses a spontaneous redox reaction to produce electrical energy."},
+  {u:"Redox & Electrochemistry",t:"Electrolytic cell",d:"An electrochemical cell that uses electrical energy to drive a non-spontaneous chemical reaction (electrolysis)."},
+  {u:"Redox & Electrochemistry",t:"Anode",d:"The electrode at which oxidation occurs in an electrochemical cell."},
+  {u:"Redox & Electrochemistry",t:"Cathode",d:"The electrode at which reduction occurs in an electrochemical cell."},
+  {u:"Redox & Electrochemistry",t:"Electrolysis",d:"The use of electrical energy to cause a non-spontaneous chemical reaction, such as decomposing water into hydrogen and oxygen."},
+  {u:"Redox & Electrochemistry",t:"Activity series",d:"A ranking of metals by their ability to be oxidized (lose electrons); more active metals replace less active metals in single replacement reactions."},
+  // Nuclear Chemistry
+  {u:"Nuclear Chemistry",t:"Nuclear fission",d:"The splitting of a heavy nucleus into two lighter nuclei, releasing large amounts of energy."},
+  {u:"Nuclear Chemistry",t:"Nuclear fusion",d:"The combining of two light nuclei to form a heavier nucleus, releasing large amounts of energy."},
+  {u:"Nuclear Chemistry",t:"Radioactivity",d:"The spontaneous emission of radiation (alpha, beta, or gamma) from unstable nuclei."},
+  {u:"Nuclear Chemistry",t:"Alpha particle",d:"A particle emitted in radioactive decay consisting of 2 protons and 2 neutrons (same as a helium-4 nucleus); symbol: α or ⁴₂He."},
+  {u:"Nuclear Chemistry",t:"Beta particle",d:"An electron emitted from the nucleus during radioactive decay when a neutron converts to a proton; symbol: β or ⁰₋₁e."},
+  {u:"Nuclear Chemistry",t:"Gamma radiation",d:"High-energy electromagnetic radiation emitted from the nucleus during radioactive decay; has no mass or charge."},
+  {u:"Nuclear Chemistry",t:"Half-life",d:"The time required for half of the atoms of a radioactive sample to decay."},
+  {u:"Nuclear Chemistry",t:"Nuclear equation",d:"An equation that represents a nuclear reaction, where atomic numbers and mass numbers are balanced on both sides."},
+  {u:"Nuclear Chemistry",t:"Transmutation",d:"The conversion of one element into another through nuclear reactions, either naturally or artificially."},
+  {u:"Nuclear Chemistry",t:"Fission vs. fusion",d:"Fission splits heavy nuclei (e.g., uranium-235); fusion joins light nuclei (e.g., hydrogen isotopes). Both release energy via E = mc²."},
+  // Organic Chemistry
+  {u:"Organic Chemistry",t:"Organic chemistry",d:"The branch of chemistry concerned with carbon-containing compounds."},
+  {u:"Organic Chemistry",t:"Hydrocarbon",d:"An organic compound containing only carbon and hydrogen atoms."},
+  {u:"Organic Chemistry",t:"Alkane",d:"A saturated hydrocarbon with single bonds only; general formula CₙH₂ₙ₊₂ (e.g., methane, ethane, propane)."},
+  {u:"Organic Chemistry",t:"Alkene",d:"An unsaturated hydrocarbon containing at least one carbon-carbon double bond; general formula CₙH₂ₙ."},
+  {u:"Organic Chemistry",t:"Alkyne",d:"An unsaturated hydrocarbon containing at least one carbon-carbon triple bond; general formula CₙH₂ₙ₋₂."},
+  {u:"Organic Chemistry",t:"Saturated compound",d:"An organic compound containing only single bonds between carbon atoms (no more hydrogen can be added)."},
+  {u:"Organic Chemistry",t:"Unsaturated compound",d:"An organic compound containing one or more double or triple bonds between carbon atoms."},
+  {u:"Organic Chemistry",t:"Functional group",d:"A specific group of atoms in an organic molecule responsible for the molecule's characteristic chemical properties."},
+  {u:"Organic Chemistry",t:"Alcohol",d:"An organic compound containing the hydroxyl group (–OH) bonded to a carbon atom (e.g., ethanol, C₂H₅OH)."},
+  {u:"Organic Chemistry",t:"Aldehyde",d:"An organic compound with a carbonyl group (C=O) at the end of the carbon chain; general formula RCHO."},
+  {u:"Organic Chemistry",t:"Ketone",d:"An organic compound with a carbonyl group (C=O) in the middle of the carbon chain; general formula RCOR'."},
+  {u:"Organic Chemistry",t:"Carboxylic acid",d:"An organic acid containing the carboxyl group (–COOH); makes solutions acidic (e.g., acetic acid)."},
+  {u:"Organic Chemistry",t:"Ester",d:"An organic compound formed by the reaction of a carboxylic acid and an alcohol; often has a pleasant fruity smell."},
+  {u:"Organic Chemistry",t:"Amine",d:"An organic compound derived from ammonia by replacing one or more hydrogen atoms with carbon-containing groups; contains –NH₂."},
+  {u:"Organic Chemistry",t:"Amide",d:"An organic compound containing a carbonyl group bonded to a nitrogen atom (–CONH₂); found in proteins."},
+  {u:"Organic Chemistry",t:"Ether",d:"An organic compound containing an oxygen atom bonded to two carbon-containing groups (R–O–R')."},
+  {u:"Organic Chemistry",t:"Polymer",d:"A large molecule made up of many repeating smaller units called monomers, linked by covalent bonds."},
+  {u:"Organic Chemistry",t:"Monomer",d:"A small molecule that can bond with others of its kind to form a polymer."},
+  {u:"Organic Chemistry",t:"Addition polymerization",d:"A type of polymerization in which monomers with double bonds add together with no atoms lost."},
+  {u:"Organic Chemistry",t:"Condensation polymerization",d:"A type of polymerization in which monomers join together and small molecules (usually water) are released."},
+  {u:"Organic Chemistry",t:"Isomers",d:"Compounds with the same molecular formula but different structural arrangements, resulting in different properties."},
+  {u:"Organic Chemistry",t:"Substitution reaction",d:"A reaction in which one atom or group in a molecule is replaced by another atom or group (common in saturated hydrocarbons)."},
+  {u:"Organic Chemistry",t:"Addition reaction",d:"A reaction in which atoms are added across a double or triple bond (common in unsaturated hydrocarbons)."},
+  {u:"Organic Chemistry",t:"Fermentation",d:"The anaerobic breakdown of glucose by yeast or bacteria to produce ethanol and CO₂; a form of organic chemistry."},
+  {u:"Organic Chemistry",t:"Saponification",d:"The hydrolysis of an ester by a base to produce a carboxylate salt (soap) and an alcohol."},
+  // Gases
+  {u:"Gases",t:"Gas laws",d:"A set of laws describing the behavior of gases, relating pressure (P), volume (V), temperature (T), and amount (n)."},
+  {u:"Gases",t:"Boyle's Law",d:"At constant temperature, the pressure and volume of a gas are inversely proportional: P₁V₁ = P₂V₂."},
+  {u:"Gases",t:"Charles's Law",d:"At constant pressure, the volume and absolute temperature of a gas are directly proportional: V₁/T₁ = V₂/T₂."},
+  {u:"Gases",t:"Gay-Lussac's Law",d:"At constant volume, the pressure and absolute temperature of a gas are directly proportional: P₁/T₁ = P₂/T₂."},
+  {u:"Gases",t:"Combined gas law",d:"A combination of Boyle's, Charles's, and Gay-Lussac's laws: P₁V₁/T₁ = P₂V₂/T₂."},
+  {u:"Gases",t:"Ideal gas law",d:"PV = nRT, relating pressure, volume, moles, and temperature using the ideal gas constant R."},
+  {u:"Gases",t:"Dalton's Law of Partial Pressures",d:"The total pressure of a gas mixture is the sum of the partial pressures of each component gas."},
+  {u:"Gases",t:"STP",d:"Standard conditions defined as 0°C (273 K) and 1 atm pressure; 1 mole of ideal gas occupies 22.4 L at STP."},
+  {u:"Gases",t:"Kinetic molecular theory",d:"A model explaining gas behavior: gas particles are in constant random motion, collisions are elastic, and average kinetic energy is proportional to absolute temperature."},
+  // Thermochemistry
+  {u:"Thermochemistry",t:"Calorimetry",d:"The measurement of heat flow in chemical reactions using a calorimeter; Q = mcΔT."},
+  {u:"Thermochemistry",t:"Specific heat capacity",d:"The amount of heat required to raise the temperature of 1 gram of a substance by 1°C (or 1 K); water's specific heat = 4.18 J/g·°C."},
+  {u:"Thermochemistry",t:"Heat (Q)",d:"Energy transferred between objects due to temperature difference; Q = mcΔT."},
+  {u:"Thermochemistry",t:"Hess's Law",d:"The total enthalpy change of a reaction is the same whether it proceeds in one step or multiple steps."},
+  {u:"Thermochemistry",t:"Entropy (S)",d:"A measure of disorder or randomness in a system; reactions tend toward increased entropy."},
+  {u:"Thermochemistry",t:"Enthalpy (H)",d:"The heat content of a system at constant pressure; change in enthalpy (ΔH) indicates heat absorbed or released."},
+  {u:"Thermochemistry",t:"Thermochemical equation",d:"A balanced chemical equation that includes the enthalpy change (ΔH) for the reaction."}
+];
+
+// ─────────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────────
+const STORAGE_KEY = 'chem_progress_v1';
+let activeUnit = 'All';
+let deck       = [];
+let idx        = 0;
+let flipped    = false;
+let reviewMode = false;
+let grades     = {};
+
+function saveGrades() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(grades)); } catch(e) {}
+}
+function loadGrades() {
+  try { const r = localStorage.getItem(STORAGE_KEY); if (r) grades = JSON.parse(r); } catch(e) {}
+}
+function clearGrades() { grades = {}; saveGrades(); }
+
+function poolFor(unit) {
+  return unit === 'All' ? [...ALL] : ALL.filter(c => c.u === unit);
+}
+function missedIn(unit) { return poolFor(unit).filter(c => grades[c.t] === 'miss'); }
+function allGotIn(unit) {
+  const p = poolFor(unit);
+  return p.length > 0 && p.every(c => grades[c.t] === 'got');
+}
+
+function renderTabs() {
+  const units = ['All','Matter & Structure','Atomic Theory','Periodic Table','Bonding',
+                 'Formulas & Reactions','Kinetics & Equilibrium','Solutions',
+                 'Acids & Bases','Redox & Electrochemistry','Nuclear Chemistry',
+                 'Organic Chemistry','Gases','Thermochemistry'];
+  const el = document.getElementById('unitTabs');
+  el.innerHTML = '';
+  units.forEach(u => {
+    const count    = u === 'All' ? ALL.length : ALL.filter(c => c.u === u).length;
+    const complete = allGotIn(u);
+    const btn = document.createElement('button');
+    btn.className = 'unit-tab' + (u === activeUnit ? ' active' : '') + (complete ? ' complete' : '');
+    btn.innerHTML = `${u} <span style="opacity:.55">(${count})</span><span class="done-dot">✓</span>`;
+    btn.onclick = () => { activeUnit = u; reviewMode = false; buildDeck(); renderTabs(); };
+    el.appendChild(btn);
+  });
+}
+
+function renderBanner() {
+  const banner = document.getElementById('reviewBanner');
+  const txt    = document.getElementById('reviewBannerText');
+  const rbtn   = document.getElementById('reviewBannerBtn');
+  const missed = missedIn(activeUnit);
+  if (reviewMode) {
+    banner.className = 'review-banner active show';
+    txt.textContent  = `Reviewing ${deck.length} missed card${deck.length !== 1 ? 's' : ''}`;
+    rbtn.textContent = '✕ Exit review';
+  } else if (missed.length > 0) {
+    banner.className = 'review-banner idle show';
+    txt.textContent  = `${missed.length} card${missed.length !== 1 ? 's' : ''} still to learn`;
+    rbtn.textContent = 'Review missed →';
+  } else {
+    banner.className = 'review-banner idle';
+  }
+}
+
+function renderProgress() {
+  const pool  = poolFor(activeUnit);
+  const gotN  = pool.filter(c => grades[c.t] === 'got').length;
+  const missN = pool.filter(c => grades[c.t] === 'miss').length;
+  const total = pool.length || 1;
+  document.getElementById('barGot').style.width  = (gotN  / total * 100) + '%';
+  document.getElementById('barMiss').style.width = (missN / total * 100) + '%';
+  document.getElementById('lblGot').textContent  = gotN  + ' got it';
+  document.getElementById('lblMiss').textContent = missN + ' missed';
+  document.getElementById('lblPos').textContent  =
+    deck.length ? (reviewMode ? '📌 ' : '') + (idx + 1) + ' / ' + deck.length : '';
+}
+
+function renderCard() {
+  const done = deck.length === 0;
+  document.getElementById('cardViewport').style.display = done ? 'none' : '';
+  document.getElementById('completion').classList.toggle('show', done);
+  document.getElementById('gradeWrap').classList.toggle('show', !done && flipped);
+  if (done) { renderCompletion(); }
+  else {
+    document.getElementById('term').textContent = deck[idx].t;
+    document.getElementById('def').textContent  = deck[idx].d;
+  }
+  renderProgress();
+  renderBanner();
+}
+
+function renderCompletion() {
+  const missed = missedIn(activeUnit);
+  document.getElementById('cEmoji').textContent = missed.length === 0 ? '🎉' : '✅';
+  document.getElementById('cTitle').textContent = missed.length === 0
+    ? (reviewMode ? 'All caught up!' : 'Deck complete!')
+    : 'Round complete!';
+  document.getElementById('cSub').textContent = missed.length === 0
+    ? 'You got every card. Great work!'
+    : `${missed.length} card${missed.length !== 1 ? 's' : ''} still to review — hit "Review missed" to drill them again.`;
+}
+
+function buildDeck() {
+  idx = 0; flipped = false;
+  document.getElementById('cardInner').classList.remove('flipped');
+  document.getElementById('gradeWrap').classList.remove('show');
+  deck = reviewMode ? missedIn(activeUnit) : poolFor(activeUnit);
+  renderCard();
+}
+
+function shuffleDeck() {
+  deck.sort(() => Math.random() - 0.5);
+  idx = 0; flipped = false;
+  document.getElementById('cardInner').classList.remove('flipped');
+  document.getElementById('gradeWrap').classList.remove('show');
+  renderCard();
+}
+
+function resetDeck() { clearGrades(); reviewMode = false; buildDeck(); renderTabs(); }
+
+function toggleReviewMode() {
+  reviewMode = !reviewMode;
+  if (reviewMode && missedIn(activeUnit).length === 0) { reviewMode = false; return; }
+  buildDeck();
+}
+
+function navigate(dir) {
+  if (deck.length === 0) return;
+  slideToCard((idx + dir + deck.length) % deck.length, dir);
+}
+
+function slideToCard(nextIdx, dir) {
+  if (nextIdx === idx && deck.length > 1) return;
+  const slider = document.getElementById('cardSlider');
+  const ghost  = document.getElementById('cardGhost');
+
+  ghost.style.left = dir > 0 ? '100%' : '-100%';
+  document.getElementById('ghostTerm').textContent = deck[nextIdx].t;
+
+  const inner = document.getElementById('cardInner');
+  inner.style.transition = 'none';
+  inner.classList.remove('flipped');
+  void inner.offsetWidth;
+  inner.style.transition = '';
+  flipped = false;
+  document.getElementById('gradeWrap').classList.remove('show');
+
+  slider.classList.add('animating');
+  slider.style.transform = dir > 0 ? 'translateX(-100%)' : 'translateX(100%)';
+
+  slider.addEventListener('transitionend', function handler() {
+    slider.removeEventListener('transitionend', handler);
+    slider.classList.remove('animating');
+    slider.style.transform = '';
+    idx = nextIdx;
+    renderCard();
+  }, { once: true });
+}
+
+function doFlip() {
+  if (deck.length === 0) return;
+  flipped = !flipped;
+  document.getElementById('cardInner').classList.toggle('flipped', flipped);
+  document.getElementById('gradeWrap').classList.toggle('show', flipped);
+}
+
+function grade(result) {
+  if (deck.length === 0) return;
+  const card = deck[idx];
+  grades[card.t] = result;
+  saveGrades();
+
+  if (reviewMode && result === 'got') {
+    deck.splice(idx, 1);
+    if (deck.length === 0) { flipped = false; renderCard(); return; }
+    idx = idx % deck.length;
+    flipped = false;
+    document.getElementById('cardInner').classList.remove('flipped');
+    document.getElementById('gradeWrap').classList.remove('show');
+    renderCard();
+    return;
+  }
+
+  if (idx === deck.length - 1) {
+    deck = [];
+    flipped = false;
+    document.getElementById('cardInner').classList.remove('flipped');
+    document.getElementById('gradeWrap').classList.remove('show');
+    renderCard();
+  } else {
+    slideToCard(idx + 1, 1);
+  }
+}
+
+let tsX = 0, tsY = 0;
+document.getElementById('cardViewport').addEventListener('touchstart', e => {
+  tsX = e.touches[0].clientX; tsY = e.touches[0].clientY;
+}, { passive: true });
+document.getElementById('cardViewport').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tsX;
+  const dy = e.changedTouches[0].clientY - tsY;
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40)
+    dx < 0 ? navigate(1) : navigate(-1);
+}, { passive: true });
+
+document.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA'].includes(e.target.tagName)) return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); navigate(1); }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); navigate(-1); }
+  if (e.key === ' ')          { e.preventDefault(); doFlip(); }
+  if (e.key === '1' && flipped) grade('got');
+  if (e.key === '2' && flipped) grade('miss');
+});
+
+loadGrades();
+buildDeck();
+renderTabs();
+</script>
+</body>
+</html>
